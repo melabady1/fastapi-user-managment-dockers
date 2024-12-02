@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: userservice
+      POSTGRES_PASSWORD: userpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - user_management_service
+      - service_a
+      - service_b
+
+  user_management_service:
+    build: ./user_management_service
+    expose:
+      - "8000"
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql://userservice:userpassword@postgres/userdb
+
+  service_a:
+    build: ./service_a
+    expose:
+      - "8000"
+    depends_on:
+      - user_management_service
+
+  service_b:
+    build: ./service_b
+    expose:
+      - "8000"
+    depends_on:
+      - user_management_service
+
+volumes:
+  postgres_data:
